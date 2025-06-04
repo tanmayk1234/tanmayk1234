@@ -1,0 +1,19 @@
+# FebLove-Website-
+initgit
+add
+README.mdgit
+commit
+-m
+first commit
+git
+branch
+-M
+maingit
+remote
+add
+origin
+https://github.com/tanmayk1234/FebLove-Website-.gitgit
+push
+-u
+origin
+main
