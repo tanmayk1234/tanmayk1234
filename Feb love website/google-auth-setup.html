@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Authentication Setup - FebLove</title>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+            color: #333;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        code {
+            background-color: #f1f1f1;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        pre {
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .step {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+        img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Google Authentication Setup Guide</h1>
+        <p>This guide will help you set up Google Authentication for your FebLove website.</p>
+        
+        <div class="step">
+            <h2>Step 1: Create a Google Cloud Project</h2>
+            <ol>
+                <li>Go to the <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+                <li>Click on the project dropdown at the top of the page and select "New Project"</li>
+                <li>Name your project (e.g., "FebLove Website") and click "Create"</li>
+                <li>Wait for the project to be created and then select it from the project dropdown</li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h2>Step 2: Configure the OAuth Consent Screen</h2>
+            <ol>
+                <li>In the left sidebar, navigate to "APIs & Services" > "OAuth consent screen"</li>
+                <li>Select "External" as the user type and click "Create"</li>
+                <li>Fill in the required information:
+                    <ul>
+                        <li>App name: "FebLove"</li>
+                        <li>User support email: Your email address</li>
+                        <li>Developer contact information: Your email address</li>
+                    </ul>
+                </li>
+                <li>Click "Save and Continue"</li>
+                <li>On the "Scopes" page, click "Add or Remove Scopes" and select:
+                    <ul>
+                        <li>./auth/userinfo.email</li>
+                        <li>./auth/userinfo.profile</li>
+                    </ul>
+                </li>
+                <li>Click "Save and Continue"</li>
+                <li>On the "Test users" page, you can add your email to test the application</li>
+                <li>Click "Save and Continue" and then "Back to Dashboard"</li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h2>Step 3: Create OAuth Client ID</h2>
+            <ol>
+                <li>In the left sidebar, navigate to "APIs & Services" > "Credentials"</li>
+                <li>Click "Create Credentials" and select "OAuth client ID"</li>
+                <li>For "Application type", select "Web application"</li>
+                <li>Name: "FebLove Web Client"</li>
+                <li>Under "Authorized JavaScript origins", click "Add URI" and add:
+                    <ul>
+                        <li>Your local development URL (e.g., <code>http://localhost:5500</code> or whatever port your live server uses)</li>
+                        <li>Your production website URL when you deploy (e.g., <code>https://your-website.com</code>)</li>
+                    </ul>
+                </li>
+                <li>Click "Create"</li>
+                <li>A popup will appear with your client ID. Copy this value.</li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h2>Step 4: Update Your Website Code</h2>
+            <ol>
+                <li>Open the <code>js/google-auth.js</code> file in your website</li>
+                <li>Replace the placeholder CLIENT_ID with your actual OAuth client ID:
+                <pre>
+// Replace with your actual OAuth client ID from Google Cloud Console
+const CLIENT_ID = 'your-oauth-client-id-here';
+                </pre>
+                </li>
+            </ol>
+        </div>
+        
+        <div class="note">
+            <h3>Important Notes:</h3>
+            <ul>
+                <li>The Google Sign-In button will only work on domains that you've authorized in the Google Cloud Console</li>
+                <li>For local development, make sure to add <code>http://localhost</code> and the specific port your development server uses</li>
+                <li>If you're using a custom domain, you must add that domain to the authorized JavaScript origins</li>
+                <li>Changes to the OAuth configuration may take a few minutes to propagate</li>
+                <li>For production use, you should publish your OAuth consent screen (in the OAuth consent screen settings)</li>
+            </ul>
+        </div>
+        
+        <div class="step">
+            <h2>Troubleshooting Common Issues</h2>
+            <h3>Authorization Error</h3>
+            <p>If you see "Access blocked: Authorization Error", it means your domain isn't authorized. Check:</p>
+            <ul>
+                <li>That you've added the correct domain to Authorized JavaScript origins</li>
+                <li>That you're using the correct CLIENT_ID in your code</li>
+                <li>That you're accessing the site from the exact domain you authorized (including http/https and www/non-www)</li>
+            </ul>
+            
+            <h3>Invalid Client</h3>
+            <p>If you see "invalid_client", double-check your CLIENT_ID is correctly copied from Google Cloud Console.</p>
+            
+            <h3>Popup Blocked</h3>
+            <p>If the sign-in popup is blocked, make sure to allow popups for your website in the browser settings.</p>
+        </div>
+    </div>
+</body>
+</html>

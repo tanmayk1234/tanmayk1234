@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets Integration Setup - FebLove</title>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+            color: #333;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        code {
+            background-color: #f1f1f1;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        pre {
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .step {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Google Sheets Integration Setup Guide</h1>
+        <p>This guide will help you set up the integration between your FebLove website and Google Sheets to collect user data.</p>
+        
+        <div class="step">
+            <h2>Step 1: Create a Google Sheet</h2>
+            <ol>
+                <li>Go to <a href="https://sheets.google.com" target="_blank">Google Sheets</a> and create a new spreadsheet</li>
+                <li>Name your spreadsheet "FebLove User Data" or something similar</li>
+                <li>Create three separate sheets (tabs) named:
+                    <ul>
+                        <li>Contact Form Submissions</li>
+                        <li>Newsletter Subscriptions</li>
+                        <li>Orders</li>
+                    </ul>
+                </li>
+                <li>Set up the headers for each sheet:
+                    <ul>
+                        <li>Contact Form: Timestamp, Name, Email, Subject, Message</li>
+                        <li>Newsletter: Timestamp, Email</li>
+                        <li>Orders: Timestamp, Name, Email, Address, City, ZIP, Country, Payment Method, Order Items, Order Total</li>
+                    </ul>
+                </li>
+                <li>Note your Google Sheet ID from the URL: <code>https://docs.google.com/spreadsheets/d/<strong>YOUR_SHEET_ID_HERE</strong>/edit</code></li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h2>Step 2: Create a Google Apps Script</h2>
+            <ol>
+                <li>In your Google Sheet, click on <strong>Extensions</strong> > <strong>Apps Script</strong></li>
+                <li>Replace the default code with the following script:</li>
+                <pre>
+// Google Apps Script to handle form submissions from FebLove website
+function doPost(e) {
+  try {
+    // Parse the incoming data
+    const data = JSON.parse(e.postData.contents);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet;
+    
+    // Determine which sheet to use based on form type
+    switch(data.formType) {
+      case 'contact':
+        sheet = ss.getSheetByName('Contact Form Submissions');
+        sheet.appendRow([
+          data.timestamp,
+          data.name,
+          data.email,
+          data.subject,
+          data.message
+        ]);
+        break;
+        
+      case 'newsletter':
+        sheet = ss.getSheetByName('Newsletter Subscriptions');
+        sheet.appendRow([
+          data.timestamp,
+          data.email
+        ]);
+        break;
+        
+      case 'order':
+        sheet = ss.getSheetByName('Orders');
+        sheet.appendRow([
+          data.timestamp,
+          data.customerInfo.name,
+          data.customerInfo.email,
+          data.customerInfo.address,
+          data.customerInfo.city,
+          data.customerInfo.zip,
+          data.customerInfo.country,
+          data.paymentMethod,
+          JSON.stringify(data.orderItems),
+          data.orderTotal
+        ]);
+        break;
+    }
+    
+    // Return success
+    return ContentService.createTextOutput(JSON.stringify({
+      'result': 'success'
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch(error) {
+    // Log the error and return failure
+    console.error(error);
+    return ContentService.createTextOutput(JSON.stringify({
+      'result': 'error',
+      'error': error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+                </pre>
+                <li>Save the script with a name like "FebLove Form Handler"</li>
+                <li>Click on <strong>Deploy</strong> > <strong>New deployment</strong></li>
+                <li>Select <strong>Web app</strong> as the deployment type</li>
+                <li>Set the following options:
+                    <ul>
+                        <li>Description: "FebLove Form Handler"</li>
+                        <li>Execute as: "Me"</li>
+                        <li>Who has access: "Anyone"</li>
+                    </ul>
+                </li>
+                <li>Click <strong>Deploy</strong> and authorize the app when prompted</li>
+                <li>Copy the Web app URL that appears after deployment</li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h2>Step 3: Update Your Website Code</h2>
+            <ol>
+                <li>Open the <code>google-sheets-api.js</code> file in your website's js folder</li>
+                <li>Replace the placeholder values with your actual Google Sheet ID and Web App URL:
+                <pre>
+// Replace with your actual Google Sheet ID
+const SHEET_ID = 'your_sheet_id_here';
+// Replace with your Google Script Web App URL
+const SCRIPT_URL = 'your_web_app_url_here';
+                </pre>
+                </li>
+                <li>Add the script to your website by adding this line to the <code>index.html</code> file, just before the closing <code>&lt;/body&gt;</code> tag:
+                <pre>&lt;script src="js/google-sheets-api.js"&gt;&lt;/script&gt;</pre>
+                </li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h2>Step 4: Add CSS for Feedback Elements</h2>
+            <p>Add these styles to your <code>styles.css</code> file:</p>
+            <pre>
+/* Google Sheets Integration Styles */
+#loading-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    color: white;
+}
+
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 4px solid white;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 5px;
+    color: white;
+    z-index: 1000;
+    animation: fadeIn 0.5s, fadeOut 0.5s 4.5s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.success-message {
+    background-color: #4CAF50;
+}
+
+.error-message {
+    background-color: #f44336;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
+}
+            </pre>
+        </div>
+        
+        <div class="note">
+            <h3>Important Notes:</h3>
+            <ul>
+                <li>Make sure to test the integration thoroughly before going live</li>
+                <li>The Google Sheet must be accessible to the Google account you used to create the Apps Script</li>
+                <li>For security reasons, consider implementing additional validation on your server side</li>
+                <li>This implementation uses client-side JavaScript, which means the Web App URL will be visible in your code</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
